@@ -73,33 +73,56 @@ var charts = {
     },
 
     playbackUsage: function (canvas, $root) {
-        var data = new google.visualization.DataTable();
+        var today = fetchStats('playback-usage'),
+            lastWeek = fetchStats('playback-usage-minus-7'),
+            unwrapData = function (row) {
+                return row.map(function (r) {
+                    num = parseFloat(r.c[3], 10);
+                    if (isNaN(num))
+                        num = false;
 
+                    return [
+                        parseInt(r.c[0], 10),
+                        num
+                    ]
+                });
+            },
+            data = new google.visualization.DataTable();
             data.addColumn('timeofday', 'Hour');
             data.addColumn({
                 type: 'number',
-                label: 'Conversion',
+                label: 'Today',
+                pattern: '##%'
+            });
+            data.addColumn({
+                type: 'number',
+                label: 'Last Week',
                 pattern: '##%'
             });
 
-        fetchStats('playback-usage').then(function (resp) {
+        $.when(today, lastWeek).then(function (todayResult, lastWeekResult) {
             var total = 0,
                 count = 0,
                 average = 0,
-                set1 = [];
+                set1 = unwrapData(todayResult[0].stats);
+                set2 = unwrapData(lastWeekResult[0].stats);
 
-            resp.stats.forEach(function (r, i) {
-                var num = parseFloat(r.c[3], 10),
-                    hour = [parseInt(r.c[0],10), 0,0,0];
+            set1.forEach(function (r, i) {
+                var today = r[1],
+                    lastWeek = set2[i][1],
+                    hour = [r[0], 0,0,0];
 
-                if (isNaN(num)) {
-                    num = 0;
+                if (today === false) {
+                    today = 0;
                 } else {
-                    total += num;
+                    total += today;
                     count++;
                 }
 
-                    data.addRow([hour, num * 100]);
+                if (lastWeek === false)
+                    lastWeek = 0;
+
+                data.addRow([hour, today * 100, lastWeek * 100]);
             });
 
             var formatter = new google.visualization.NumberFormat({
@@ -107,6 +130,7 @@ var charts = {
                 suffix: '%'
             });
             formatter.format(data, 1);
+            formatter.format(data, 2);
 
             var chart = new google.visualization.LineChart(canvas);
             var options = {
@@ -121,6 +145,91 @@ var charts = {
 
             average = total / count;
             $root.find('.average').text((average * 100).toFixed(0) + '%');
+        });
+    },
+
+    signedIn: function (canvas, $root) {
+        var today = fetchStats('signed-in'),
+            lastWeek = fetchStats('signed-in-minus-7'),
+            clean = function (raw, type) {
+                return raw.filter(function (r) {
+                    return r.c[1] !== "Total"
+                }).filter(function (r) {
+                    return r.c[0] === type
+                });
+            },
+            formatRow = function (rows) {
+                return rows.map(function (r, i) {
+                    return [
+                        parseInt(r.c[1], 10),
+                        parseInt(r.c[2], 10)
+                    ]
+                });
+            },
+            getSigned = function (raw, signed) {
+                return formatRow(clean(raw, "1"));
+            },
+            getAnon = function (raw, signed) {
+                return formatRow(clean(raw, "N/A"));
+            },
+            sortByHour = function (a, b) {
+                if (a[0] === b[0])
+                    return 0;
+                if (a[0] < b[0])
+                    return -1;
+                else
+                    return 1;
+            }
+            data = new google.visualization.DataTable();
+            data.addColumn('timeofday', 'Hour')
+            data.addColumn({
+                type: 'number',
+                label: 'Today',
+                pattern: '##.##%'
+            });
+            data.addColumn({
+                type: 'number',
+                label: 'Last Week',
+                pattern: '##.##%'
+            });
+
+        $.when(today, lastWeek).then(function (todayResult, lastWeekResult) {
+            var anonToday      = getAnon(todayResult[0].stats).sort(sortByHour),
+                signedToday    = getSigned(todayResult[0].stats).sort(sortByHour),
+                anonLastWeek   = getAnon(lastWeekResult[0].stats).sort(sortByHour),
+                signedLastWeek = getSigned(lastWeekResult[0].stats).sort(sortByHour),
+                getVal = function (blob, i) {
+                    if (i in blob)
+                        return blob[i][1];
+                    else
+                        return 0;
+                }
+
+            data.addRows(Array.apply(null, Array(24)).map(function (x, i) {
+                return [
+                    [i,0,0,0],
+                    (getVal(signedToday, i) / (getVal(signedToday, i) + getVal(anonToday, i))) * 100,
+                    (getVal(signedLastWeek, i) / (getVal(signedLastWeek, i) + getVal(anonLastWeek, i))) * 100
+                ]
+            }));
+
+            var formatter = new google.visualization.NumberFormat({
+                fractionDigits: 2,
+                suffix: '%'
+            });
+            formatter.format(data, 1);
+            formatter.format(data, 2);
+
+            var chart = new google.visualization.LineChart(canvas);
+            var options = {
+                legend: {position: 'top'},
+                aggregationTarget: 'series',
+                backgroundColor: { fill: 'transparent' },
+                vAxis: {
+                    format: '#.##\'%\''
+                }
+            };
+            chart.draw(data, options);
         });
     }
 }
