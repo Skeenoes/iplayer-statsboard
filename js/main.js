@@ -4,6 +4,13 @@ function fetchStats(name) {
     return $.getJSON("http://mrjrp.com:7081/stats/" + name)
 }
 
+String.prototype.ucwords = function () {
+    return this.toString().replace(/^([a-z\u00E0-\u00FC])|\s+([a-z\u00E0-\u00FC])/g, function($1) {
+        return $1.toUpperCase();
+    });
+}
+
+
 var charts = {
     ubsPerHour: function (canvas, $root) {
 
@@ -179,7 +186,7 @@ var charts = {
                     return -1;
                 else
                     return 1;
-            }
+            },
             data = new google.visualization.DataTable();
             data.addColumn('timeofday', 'Hour')
             data.addColumn({
@@ -229,6 +236,91 @@ var charts = {
                     format: '#.##\'%\''
                 }
             };
+            chart.draw(data, options);
+        });
+    },
+    searchTerms: function (canvas, $root) {
+        fetchStats('search-terms').then (function (all) {
+            var highest = 1,
+                sortBySearches = function (a, b) {
+                    if (a[2] === b[2])
+                        return 0;
+                    if (a[2] > b[2])
+                        return -1;
+                    else
+                        return 1;
+                }
+
+            all.stats.filter(function (x) {
+                return x.c[0] !== "Total"
+            }).forEach(function (x) {
+                highest = Math.max(parseInt(x.c[0], 10), highest);
+            });
+
+            var terms = {},
+                totalSearches = 1;
+
+            all.stats.filter(function (r) {
+                return parseInt(r.c[0], 10) === highest -1;
+            }).map(function (r) {
+                var term = r.c[1].toLowerCase(),
+                    val = parseInt(r.c[2], 10);
+
+                if (term === 'total') {
+                    totalSearches = val;
+                } else if (term === 'rest') {
+
+                } else if (term in terms) {
+                    terms[term] += val;
+                } else {
+                    terms[term] = val;
+                }
+            });
+
+            var rows = [];
+
+            for (i in terms) {
+                var perc = terms[i] / (terms[i] + totalSearches);
+                rows.push([i, perc, terms[i]]);
+            }
+
+            var html = rows.sort(sortBySearches).slice(0, 10).map(function (r) {
+                return '<li>' + r[0].ucwords() + ' - ' + r[1].toFixed(2) * 100 + '%' + ' - ' + r[2] + '</li>';
+            });
+            $(canvas).html('<ul>' + html.join('\n') + '</ul>')
+        });
+    },
+    vistsPerUb: function (canvas) {
+        fetchStats('vists-per-ub').then (function (stats) {
+            var data = new google.visualization.DataTable();
+            data.addColumn({
+                type: 'number',
+                label: 'Vists'
+            });
+            data.addColumn({
+                type: 'number',
+                label: 'Users'
+            });
+
+            stats.stats.sort(function (a, b) {
+                a = parseInt(a.c[0], 10);
+                b = parseInt(b.c[0], 10);
+                if (a === b)
+                    return 0
+                if (a > b){
+                    return 1
+                } else {
+                    return -1
+                }
+            }).slice(0, 7).forEach(function (r, i) {
+                data.addRow([parseInt(r.c[0], 10), parseInt(r.c[1])]);
+            });
+
+            var chart = new google.charts.Bar(canvas),
+                options = {
+                    legend: { position: 'none' }
+                };
+
             chart.draw(data, options);
         });
     }
