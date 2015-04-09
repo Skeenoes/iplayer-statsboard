@@ -239,6 +239,48 @@ var charts = {
             chart.draw(data, options);
         });
     },
+    timeBetween: function (canvas, $root) {
+        fetchStats('time-between-visits').then (function (stats) {
+            var data = new google.visualization.DataTable();
+            data.addColumn({
+                type: 'number',
+                label: 'Users'
+            });
+            data.addColumn({
+                type: 'number',
+                label: 'Hours'
+            });
+
+            var total = 0,
+                never = 0,
+                under1 = 0;
+
+            stats.stats.forEach(function (r, i) {
+                var num = parseInt(r.c[1], 10);
+                if (r.c[0].substr(0, 4) === 'Non-') {
+                    never = num;
+                } else if (r.c[0].substr(0,3) === ' 0h') {
+                    under1 = num;
+                } else {
+                    data.addRow([parseInt(r.c[0].substr(0,2), 10), num]);
+                }
+                total += num;
+            });
+
+            var chart = new google.charts.Bar(canvas),
+                options = {
+                    legend: { position: 'none' },
+                    hAxis: { gridlines: {count: 10}}
+                },
+                neverPerc = ((never / (total + never)) * 100).toFixed(0)
+                under1Perc = ((under1 / (total + under1)) * 100).toFixed(0)
+
+            chart.draw(data, options);
+
+            $root.find('.never').text(neverPerc + '%');
+            $root.find('.under1').text(under1Perc + '%');
+        });
+    },
     searchTerms: function (canvas, $root) {
         fetchStats('search-terms').then (function (all) {
             var highest = 1,
