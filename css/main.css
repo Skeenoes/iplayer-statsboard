@@ -5,14 +5,14 @@
    ========================================================================== */
 
 .ubs {
-	height: 500px;
+	height: 350px;
 }
 .ubs .canvas {
 	height: 100%;
 }
 
 .platforms {
-	height: 500px;
+	height: 350px;
 }
 
 .platforms .canvas{
@@ -20,6 +20,13 @@
 	height: 100%;
 }
 
+h2 {
+    font-size: 19px;
+}
+
+h3 {
+    font-size: 15px;
+}
 
 
 
