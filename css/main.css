@@ -20,6 +20,14 @@
 	height: 100%;
 }
 
+.mast h1{
+    background-color: #262525;
+    padding: 5px;
+
+
+        color:#f54997;
+}
+
 h2 {
     font-size: 19px;
 }
