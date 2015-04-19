@@ -44,9 +44,12 @@ var charts = {
 
             var chart = new google.visualization.LineChart(canvas);
             var options = {
-                legend: {position: 'top'},
+                legend: {position: 'top', textStyle:{color: 'white'}},
                 aggregationTarget: 'series',
-                backgroundColor: { fill: 'transparent' }
+                backgroundColor: { fill: 'transparent'},
+                hAxis: { baselineColor: 'white', textStyle:{color: 'white'}},
+                vAxis: { baselineColor: 'white', textStyle:{color: 'white'}},
+                height: 250
             };
             chart.draw(data, options);
         });
@@ -70,7 +73,9 @@ var charts = {
             var data = google.visualization.arrayToDataTable(dataArray);
             var options = {
                 pieSliceText: 'label',
-                legend: 'none'
+                legend: 'none',
+                backgroundColor: {fill: 'transparent'},
+                height: 250
             };
 
             var chart = new google.visualization.PieChart(canvas);
@@ -141,12 +146,12 @@ var charts = {
 
             var chart = new google.visualization.LineChart(canvas);
             var options = {
-                legend: {position: 'top'},
+                legend: {position: 'top', textStyle:{color: 'white'}},
                 aggregationTarget: 'series',
                 backgroundColor: { fill: 'transparent' },
-                vAxis: {
-                    format: '#\'%\''
-                }
+                hAxis: { baselineColor: 'white', textStyle:{color: 'white'}},
+                vAxis: { baselineColor: 'white', textStyle:{color: 'white'}, format: '#\'%\''},
+                height: 250
             };
             chart.draw(data, options);
 
@@ -229,12 +234,15 @@ var charts = {
 
             var chart = new google.visualization.LineChart(canvas);
             var options = {
-                legend: {position: 'top'},
+                legend: {position: 'top', textStyle:{color: 'white'}},
                 aggregationTarget: 'series',
                 backgroundColor: { fill: 'transparent' },
                 vAxis: {
                     format: '#.##\'%\''
-                }
+                },
+                hAxis: { baselineColor: 'white', textStyle:{color: 'white'}},
+                vAxis: { baselineColor: 'white', textStyle:{color: 'white'}},
+                height: 250
             };
             chart.draw(data, options);
         });
@@ -269,8 +277,10 @@ var charts = {
 
             var chart = new google.charts.Bar(canvas),
                 options = {
-                    legend: { position: 'none' },
-                    hAxis: { gridlines: {count: 10}}
+                    legend: { position: 'none'},
+                    hAxis: { gridlines: {count: 10}},
+                    backgroundColor: {fill: 'transparent'},
+                    height: 250
                 },
                 neverPerc = ((never / (total + never)) * 100).toFixed(0)
                 under1Perc = ((under1 / (total + under1)) * 100).toFixed(0)
@@ -337,7 +347,7 @@ var charts = {
             var data = new google.visualization.DataTable();
             data.addColumn({
                 type: 'number',
-                label: 'Vists'
+                label: 'Visits'
             });
             data.addColumn({
                 type: 'number',
@@ -358,10 +368,12 @@ var charts = {
                 data.addRow([parseInt(r.c[0], 10), parseInt(r.c[1])]);
             });
 
-            var chart = new google.charts.Bar(canvas),
-                options = {
-                    legend: { position: 'none' }
-                };
+            var chart = new google.charts.Bar(canvas);
+            var options = {
+                    legend: { position: 'none', textStyle: {color:'pink'}},
+                    backgroundColor: 'transparent',
+                    height: 250,
+            };
 
             chart.draw(data, options);
         });
